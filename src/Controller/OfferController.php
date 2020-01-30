@@ -24,7 +24,7 @@ class OfferController extends AbstractController
     }
 
     /**
-     * @Route("/offers", name="offers", methods={"GET"})
+     * @Route("/api/offers", name="offers", methods={"GET"})
      */
     public function offers()
     {
