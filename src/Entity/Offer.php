@@ -5,11 +5,14 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use http\Url;
+use Symfony\Component\Routing\Generator\UrlGenerator;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\OfferRepository")
  */
-class Offer
+class Offer implements \JsonSerializable
 {
     /**
      * @ORM\Id()
@@ -144,5 +147,16 @@ class Offer
         }
 
         return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            "name" => $this->getName(),
+            "code" => $this->getCode(),
+            "description" => $this->getDescription(),
+            "logo" => $_ENV["LOGO_URL"] . $this->getLogo(),
+            "deadline" => $this->getDeadline()
+        ];
     }
 }
