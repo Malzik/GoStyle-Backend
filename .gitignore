@@ -9,4 +9,5 @@
 /var/
 /vendor/
 /symfony.exe
+/.idea
 ###< symfony/framework-bundle ###

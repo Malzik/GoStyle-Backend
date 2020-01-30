@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Form\UserType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,5 +49,30 @@ class UserController extends AbstractController
         $form->submit($data);
 
         return new JsonResponse(Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * @Route("/register", name="create.user", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function createUser(Request $request)
+    {
+        $user = new User();
+
+        $form = $this->createForm(UserType::class, $user);
+        $data = json_decode($request->getContent(),true);
+        $form->submit($data);
+
+        if($form->isSubmitted() && $form->isValid()){
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($user);
+            $em->flush();
+
+            return new JsonResponse(Response::HTTP_CREATED);
+        }
+
+        return new JsonResponse(Response::HTTP_INTERNAL_SERVER_ERROR);
+
     }
 }
