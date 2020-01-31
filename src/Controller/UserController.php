@@ -32,7 +32,10 @@ class UserController extends AbstractController
      */
     public function profil()
     {
-        return new JsonResponse($this->userRepository->find(1));
+        $profil = $this->userRepository->find(1);
+        if(empty($profil))
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse($profil);
     }
 
     /**
