@@ -11,8 +11,8 @@ Les instructions suivantes vont vous permettre de me configurer et lancer votre 
 De quoi avez vous besoin pour installer et lancer le projet.
 
 ```
-Composer
-L'executable symfony pour lancer le serveur
+Composer (https://getcomposer.org/Composer-Setup.exe)
+L'executable symfony pour lancer le serveur (https://get.symfony.com/cli/setup.exe)
 Un moteur de base de données Mysql
 git
 ```
@@ -52,10 +52,10 @@ Entrez la commande de migration de la base
 php bin/console doctrine:migration:migrate
 ```
 
-Entrez la commande de fixtures
+Générez des données avec la commande suivante
 
 ```
-php bin/console doctrine:migration:migrate
+php bin/console doctrine:fixtures:load
 ```
 
 ## Lancer les tests
