@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Repository\OfferRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -45,6 +46,9 @@ class OfferController extends AbstractController
      */
     public function offerById(int $id)
     {
+        $offer = $this->offerRepository->find($id);
+        if(empty($offer))
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         return new JsonResponse($this->offerRepository->find($id));
     }
 }
