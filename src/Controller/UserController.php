@@ -37,8 +37,7 @@ class UserController extends AbstractController
      */
     public function profil(Request $request)
     {
-        $ucmId = $this->container->get('security.token_storage')->getToken()->getUser()->getId();
-        return new JsonResponse($this->userRepository->find($ucmId));
+        return new JsonResponse($this->userRepository->find($this->getUser()->getId()));
     }
 
     /**
@@ -49,12 +48,22 @@ class UserController extends AbstractController
     public function updateProfil(Request $request)
     {
         $data = json_decode($request->getContent(),true);
-        $user = $this->userRepository->find(1);
+        $user = $this->userRepository->find($this->getUser()->getId());
 
+        if(empty($user))
+            return new JsonResponse("internal error", Response::HTTP_INTERNAL_SERVER_ERROR);
         $form = $this->createForm(UserType::class, $user);
-        $form->submit($data);
+        $form->submit($data, false);
+        if($form->isSubmitted() && $form->isValid()){
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($user);
+            $em->flush();
 
-        return new JsonResponse(Response::HTTP_NO_CONTENT);
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        }
+
+        dd($form);
+        return new JsonResponse($form->getErrors(), Response::HTTP_BAD_REQUEST);
     }
 
     /**
@@ -78,7 +87,7 @@ class UserController extends AbstractController
             return new JsonResponse(Response::HTTP_CREATED);
         }
 
-        return new JsonResponse(Response::HTTP_INTERNAL_SERVER_ERROR);
+        return new JsonResponse(Response::HTTP_BAD_REQUEST);
 
     }
 }

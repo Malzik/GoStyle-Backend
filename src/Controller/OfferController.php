@@ -25,6 +25,7 @@ class OfferController extends AbstractController
      */
     public function __construct(OfferRepository $offerRepository)
     {
+
         $this->offerRepository = $offerRepository;
     }
 
