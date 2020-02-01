@@ -35,9 +35,10 @@ class UserController extends AbstractController
     /**
      * @Route("/profil", name="profil", methods={"GET"})
      */
-    public function profil()
+    public function profil(Request $request)
     {
-        return new JsonResponse($this->userRepository->find(1));
+        $ucmId = $this->container->get('security.token_storage')->getToken()->getUser()->getId();
+        return new JsonResponse($this->userRepository->find($ucmId));
     }
 
     /**
