@@ -33,7 +33,7 @@ class UserController extends AbstractController
     }
 
     /**
-     * @Route("/profil", name="profil", methods={"GET"})
+     * @Route("/user", name="user", methods={"GET"})
      */
     public function profil(Request $request)
     {
@@ -41,7 +41,7 @@ class UserController extends AbstractController
     }
 
     /**
-     * @Route("/profil", name="update.profil", methods={"PUT"})
+     * @Route("/user", name="update.user", methods={"PUT"})
      * @param Request $request
      * @return JsonResponse
      */
@@ -51,7 +51,8 @@ class UserController extends AbstractController
         $user = $this->userRepository->find($this->getUser()->getId());
 
         if(empty($user))
-            return new JsonResponse("internal error", Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
+
         $form = $this->createForm(UserType::class, $user);
         $form->submit($data, false);
         if($form->isSubmitted() && $form->isValid()){
@@ -62,32 +63,6 @@ class UserController extends AbstractController
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
 
-        dd($form);
         return new JsonResponse($form->getErrors(), Response::HTTP_BAD_REQUEST);
-    }
-
-    /**
-     * @Route("/register", name="create.user", methods={"POST"})
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function createUser(Request $request)
-    {
-        $user = new User();
-
-        $form = $this->createForm(UserType::class, $user);
-        $data = json_decode($request->getContent(),true);
-        $form->submit($data);
-
-        if($form->isSubmitted() && $form->isValid()){
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-
-            return new JsonResponse(Response::HTTP_CREATED);
-        }
-
-        return new JsonResponse(Response::HTTP_BAD_REQUEST);
-
     }
 }
