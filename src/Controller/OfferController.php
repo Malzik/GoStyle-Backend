@@ -7,6 +7,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Class OfferController
+ * @Route("/api")
+ * @package App\Controller
+ */
 class OfferController extends AbstractController
 {
     /**
@@ -24,7 +29,7 @@ class OfferController extends AbstractController
     }
 
     /**
-     * @Route("/api/offers", name="offers", methods={"GET"})
+     * @Route("/offers", name="offers", methods={"GET"})
      */
     public function offers()
     {

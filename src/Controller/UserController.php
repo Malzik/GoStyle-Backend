@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Class UserController
+ * @Route("/api")
+ * @package App\Controller
+ */
 class UserController extends AbstractController
 {
     /**
