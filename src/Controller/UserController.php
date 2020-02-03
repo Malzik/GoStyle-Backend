@@ -5,12 +5,20 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Form\UserType;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Swagger\Annotations as SWG;
 
+
+/**
+ * Class UserController
+ * @package App\Controller
+ * @Route("/api")
+ */
 class UserController extends AbstractController
 {
     /**
@@ -29,11 +37,17 @@ class UserController extends AbstractController
 
     /**
      * @Route("/profil", name="profil", methods={"GET"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns connected profi and his offers",
+     *     @Model(type=User::class)
+     * )
+     * @SWG\Tag(name="Users")
      */
     public function profil()
     {
         $profil = $this->userRepository->find(163);
-        if($profil === null)
+        if(empty($profil))
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         return new JsonResponse($profil);
     }
@@ -42,6 +56,23 @@ class UserController extends AbstractController
      * @Route("/profil", name="update.profil", methods={"PUT"})
      * @param Request $request
      * @return JsonResponse
+     * * @SWG\Response(
+     *     response=204,
+     *     description="Update Profil",
+     * )
+     * @SWG\Parameter(
+     *     name="User",
+     *     in="body",
+     *     description="The field used to update user",
+     *     @SWG\Schema(
+     *         type="object",
+     *         @SWG\Property(property="first_name", type="string"),
+     *         @SWG\Property(property="last_name", type="string"),
+     *         @SWG\Property(property="email", type="string"),
+     *         @SWG\Property(property="password", type="string")
+     *     )
+     * )
+     * @SWG\Tag(name="Users")
      */
     public function updateProfil(Request $request)
     {
@@ -58,6 +89,23 @@ class UserController extends AbstractController
      * @Route("/register", name="create.user", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
+     * @SWG\Response(
+     *     response=201,
+     *     description="Register new profil",
+     * )
+     * @SWG\Parameter(
+     *     name="User",
+     *     in="body",
+     *     description="The field used to create user",
+     *     @SWG\Schema(
+     *         type="object",
+     *         @SWG\Property(property="first_name", type="string"),
+     *         @SWG\Property(property="last_name", type="string"),
+     *         @SWG\Property(property="email", type="string"),
+     *         @SWG\Property(property="password", type="string")
+     *     )
+     * )
+     * @SWG\Tag(name="Users")
      */
     public function createUser(Request $request)
     {
