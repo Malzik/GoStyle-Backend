@@ -4,10 +4,13 @@ namespace App\Entity;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity("email", message="L'email a déjà été utilisé")
  */
 class User implements UserInterface, \JsonSerializable
 {
@@ -36,13 +39,29 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le prenom ne doit pas être vide")
      */
 
     private $first_name;
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le nom ne doit pas être vide")
      */
     private $last_name;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="L'email ne doit pas être vide")
+     * @Assert\Email(message="Le format du mail n'est pas valide")
+*/
+    private $email;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli")
+     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court")
+     */
+    private $password;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")

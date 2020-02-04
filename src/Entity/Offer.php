@@ -154,8 +154,8 @@ class Offer implements \JsonSerializable
             "name" => $this->getName(),
             "code" => $this->getCode(),
             "description" => $this->getDescription(),
-            "logo" => $_ENV["LOGO_URL"] . $this->getLogo(),
-            "deadline" => $this->getDeadline()
+            "logo" => getenv("LOGO_URL") . $this->getLogo(),
+            "deadline" => $this->getDeadline()->format("Y-m-d")
         ];
     }
 }
