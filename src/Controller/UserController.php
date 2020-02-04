@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Form\UserType;
+use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Swagger\Annotations as SWG;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 /**
@@ -26,17 +28,20 @@ class UserController extends AbstractController
      */
     private $userRepository;
 
+    private $serializer;
+
     /**
      * UserController constructor.
      * @param UserRepository $userRepository
      */
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, SerializerInterface $serializer)
     {
         $this->userRepository = $userRepository;
+        $this->serializer = $serializer;
     }
 
     /**
-     * @Route("/profil", name="profil", methods={"GET"})
+     * @Route("/user", name="profil", methods={"GET"})
      * @SWG\Response(
      *     response=200,
      *     description="Returns connected profi and his offers",
@@ -53,7 +58,7 @@ class UserController extends AbstractController
     }
 
     /**
-     * @Route("/profil", name="update.profil", methods={"PUT"})
+     * @Route("/user", name="update.profil", methods={"PUT"})
      * @param Request $request
      * @return JsonResponse
      * * @SWG\Response(
@@ -107,23 +112,43 @@ class UserController extends AbstractController
      * )
      * @SWG\Tag(name="Users")
      */
-    public function createUser(Request $request)
+    public function createUser(Request $request, ValidatorInterface $validator)
     {
-        $user = new User();
+        $user = $this->getUnserializedUser($request);
 
-        $form = $this->createForm(UserType::class, $user);
-        $data = json_decode($request->getContent(),true);
-        $form->submit($data);
+        $errors = $validator->validate($user);
 
-        if($form->isSubmitted() && $form->isValid()){
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-
-            return new JsonResponse(Response::HTTP_CREATED);
+        if(count($errors)){
+            return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($user);
+        $em->flush();
 
+        return new JsonResponse(null, Response::HTTP_CREATED, ["Link" => "http://localhost/api/login"/*$this->generateUrl("api_login", null, 0)*/]);
     }
+
+    private function getUnserializedUser(Request $request){
+        $user = $this->serializer->deserialize(
+            $request->getContent(),
+            User::class,
+            'json'
+        );
+        return $user;
+    }
+
+    private function getJsonResponse($data = null, int $status = 200, $headers = []) : JsonResponse
+    {
+        $serializedData = $data;
+        if (!is_null($data)){
+            $serializedData = $this->serializer->serialize($data, 'json');
+        }
+        $response = new JsonResponse(null, $status, $headers);
+        $response->setContent($serializedData);
+
+        return $response;
+    }
+
+
 }

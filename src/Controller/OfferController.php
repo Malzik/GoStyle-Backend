@@ -47,7 +47,21 @@ class OfferController extends AbstractController
     public function offers()
     {
         $offers = $this->offerRepository->findAll();
-        return new JsonResponse($offers);
+        foreach ($offers as $offer){
+            $response[] = [
+                "name" => $offer->getName(),
+                "code" => $offer->getCode(),
+                "description" => $offer->getDescription(),
+                "logo" => $offer->getLogo(),
+                "deadline" => $offer->getDeadline()->format("Y-m-d"),
+                "_links" => [
+                    "item" => [
+                        "self" => $this->generateUrl("apioffer", ["id"=>$offer->getId()], 0)
+                    ]
+                ]
+            ];
+        }
+        return new JsonResponse($response);
     }
 
     /**
