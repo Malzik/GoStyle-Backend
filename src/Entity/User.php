@@ -23,6 +23,8 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\NotBlank(message="L'email ne doit pas être vide")
+     * @Assert\Email(message="Le format du mail n'est pas valide")
      */
     private $email;
 
@@ -34,6 +36,8 @@ class User implements UserInterface, \JsonSerializable
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
+     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli")
+     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court")
      */
     private $password;
 
@@ -48,20 +52,6 @@ class User implements UserInterface, \JsonSerializable
      * @Assert\NotBlank(message="Le nom ne doit pas être vide")
      */
     private $last_name;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="L'email ne doit pas être vide")
-     * @Assert\Email(message="Le format du mail n'est pas valide")
-*/
-    private $email;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli")
-     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court")
-     */
-    private $password;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")
