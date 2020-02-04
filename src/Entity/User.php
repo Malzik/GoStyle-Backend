@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -57,6 +58,16 @@ class User implements UserInterface, \JsonSerializable
      * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")
      */
     private $offers;
+
+    /**
+     * User constructor.
+     * @param $last_name
+     */
+    public function __construct()
+    {
+        $this->offers = new ArrayCollection();
+    }
+
 
     public function getId(): ?int
     {

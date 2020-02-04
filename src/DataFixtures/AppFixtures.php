@@ -17,9 +17,9 @@ class AppFixtures extends Fixture
         for ($i = 0; $i < 20; $i++) {
             $user = new User();
 
-            $user->setEmail($faker->email);
             $user->setFirstName($faker->firstName);
             $user->setLastName($faker->lastName);
+            $user->setEmail($user->getFirstName().".".$user->getLastName()."@gmail.com");
             $user->setPassword($faker->password);
             for($l= 0; $l < 3; $l++){
                 $offer = new Offer();
