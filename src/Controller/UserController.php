@@ -51,7 +51,7 @@ class UserController extends AbstractController
      */
     public function profil(Request $request)
     {
-        $profil = $this->userRepository->find(163);
+        $profil = $this->userRepository->find($this->getUser()->getId());
         if(empty($profil))
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         return new JsonResponse($profil);

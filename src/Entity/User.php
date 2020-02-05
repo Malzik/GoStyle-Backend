@@ -61,7 +61,6 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * User constructor.
-     * @param $last_name
      */
     public function __construct()
     {
@@ -215,8 +214,8 @@ class User implements UserInterface, \JsonSerializable
         }
         /** @var Offer $offer */
         return [
-            "firstName" => $this->first_name,
-            "lastName" => $this->last_name,
+            "first_name" => $this->first_name,
+            "last_name" => $this->last_name,
             "email" => $this->email,
             "offers" => $offers
         ];
