@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\Offer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\ORM\NonUniqueResultException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @method Offer|null find($id, $lockMode = null, $lockVersion = null)
@@ -47,4 +49,16 @@ class OfferRepository extends ServiceEntityRepository
         ;
     }
     */
+    public function findOneByCode($value): ?Offer
+    {
+        try {
+            return $this->createQueryBuilder('o')
+                ->andWhere('o.code = :val')
+                ->setParameter('val', $value)
+                ->getQuery()
+                ->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\OfferRepository;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +44,7 @@ class OfferController extends AbstractController
      *     )
      * )
      * @SWG\Tag(name="Offers")
+     * @Security(name="Bearer")
      **/
     public function offers()
     {
@@ -56,7 +58,7 @@ class OfferController extends AbstractController
                 "deadline" => $offer->getDeadline()->format("Y-m-d"),
                 "_links" => [
                     "item" => [
-                        "self" => $this->generateUrl("apioffer", ["id"=>$offer->getId()], 0)
+                        "self" => $this->generateUrl("apioffer", ["code"=>$offer->getCode()], 0)
                     ]
                 ]
             ];
@@ -65,21 +67,22 @@ class OfferController extends AbstractController
     }
 
     /**
-     * @Route("/offers/{id}", name="offer", methods={"GET"})
-     * @param int $id
+     * @Route("/offers/{code}", name="offer", methods={"GET"})
+     * @param string code
      * @return JsonResponse
      * @SWG\Response(
      *     response=200,
-     *     description="Returns offer by id",
+     *     description="Returns offer by code",
      *     @Model(type=Offer::class)
      * )
      * @SWG\Tag(name="Offers")
+     * @Security(name="Bearer")
      */
-    public function offerById(int $id)
+    public function offerByCode(string $code)
     {
-        $offer = $this->offerRepository->find($id);
+        $offer = $this->offerRepository->findOneByCode($code);
         if(empty($offer))
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        return new JsonResponse($this->offerRepository->find($id));
+        return new JsonResponse($this->offerRepository->findOneByCode($code));
     }
 }

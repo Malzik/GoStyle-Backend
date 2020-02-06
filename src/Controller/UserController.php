@@ -4,9 +4,9 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Form\UserType;
 use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,6 +48,7 @@ class UserController extends AbstractController
      *     @Model(type=User::class)
      * )
      * @SWG\Tag(name="Users")
+     * @Security(name="Bearer")
      */
     public function profil(Request $request)
     {
@@ -78,6 +79,7 @@ class UserController extends AbstractController
      *     )
      * )
      * @SWG\Tag(name="Users")
+     * @Security(name="Bearer")
      */
     public function updateProfil(Request $request, ValidatorInterface $validator)
     {
@@ -124,6 +126,7 @@ class UserController extends AbstractController
      *     )
      * )
      * @SWG\Tag(name="Users")
+     * @Security(name="Bearer")
      */
     public function createUser(Request $request, ValidatorInterface $validator)
     {

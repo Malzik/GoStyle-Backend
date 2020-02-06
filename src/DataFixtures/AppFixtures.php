@@ -2,16 +2,19 @@
 
 namespace App\DataFixtures;
 
+use Symfony\Component\Asset\Package;
 use App\Entity\Offer;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 
 class AppFixtures extends Fixture
 {
     public function load(ObjectManager $manager)
     {
+        $package = new Package(new EmptyVersionStrategy());
         $faker = Factory::create('fr_FR');
 
         for ($i = 0; $i < 20; $i++) {
@@ -19,15 +22,15 @@ class AppFixtures extends Fixture
 
             $user->setFirstName($faker->firstName);
             $user->setLastName($faker->lastName);
-            $user->setEmail($user->getFirstName().".".$user->getLastName()."@gmail.com");
+            $user->setEmail($faker->email);
             $user->setPassword($faker->password);
             for($l= 0; $l < 3; $l++){
                 $offer = new Offer();
-                $offer->setCode($faker->randomDigit);
+                $offer->setCode($faker->sha1);
                 $offer->setDeadline($faker->dateTimeThisMonth);
                 $offer->setDescription($faker->paragraph);
                 $offer->setName($faker->text(15));
-                $offer->setLogo($faker->imageUrl());
+                $offer->setLogo("https://image.flaticon.com/icons/svg/1973/1973782.svg");
                 $manager->persist($offer);
                 $user->addOffer($offer);
             }
