@@ -62,7 +62,6 @@ class UserController extends AbstractController
         $profil = $this->userRepository->find($this->getUser()->getId());
         if(empty($profil))
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        $profil["offers"] = "";
         return $this->getJsonResponse($profil);
     }
 
@@ -147,7 +146,7 @@ class UserController extends AbstractController
             $newPassword = $request["new_password"];
 
             $currentUser->setPassword($newPassword);
-            $errors = $validator->validate($currentUser);
+            $errors = $validator->validate($currentUser, null, ["password"]);
 
             if(count($errors)) {
                 return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);

@@ -46,8 +46,9 @@ class Offer implements \JsonSerializable
      */
     private $deadline;
 
+
     /**
-     * @ORM\OneToMany(targetEntity="UserOffer", mappedBy="user")
+     * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="offers")
      */
     private $users;
 
