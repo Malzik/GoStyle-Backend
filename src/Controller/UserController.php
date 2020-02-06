@@ -79,25 +79,28 @@ class UserController extends AbstractController
      * )
      * @SWG\Tag(name="Users")
      */
-    public function updateProfil(Request $request)
+    public function updateProfil(Request $request, ValidatorInterface $validator)
     {
-        $data = json_decode($request->getContent(),true);
-        $user = $this->userRepository->find($this->getUser()->getId());
-        if(empty($user))
+        $user = $this->getUnserializedUser($request);
+        $currentUser = $this->userRepository->find($this->getUser()->getId());
+        if(empty($currentUser))
             return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
 
-        $form = $this->createForm(UserType::class, $user);
-        $form->submit($data, false);
+        $errors = $validator->validate($user);
 
-        if($form->isSubmitted() && $form->isValid()){
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        if(count($errors)){
+            return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse($form->getErrors(), Response::HTTP_BAD_REQUEST);
+        $currentUser->setFirstName($user->getFirstName());
+        $currentUser->setLastName($user->getLastName());
+        $currentUser->setEmail($user->getEmail());
+        $currentUser->setPassword($user->getPassword());
+
+        $em = $this->getDoctrine()->getManager();
+        $em->flush();
+
+        return new JsonResponse(null, Response::HTTP_CREATED, ["Link" => "http://localhost/api/login"/*$this->generateUrl("api_login", null, 0)*/]);
     }
 
     /**
@@ -128,7 +131,7 @@ class UserController extends AbstractController
         if(empty($user))
             return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
 
-        $errors = $validator->validate($user);
+        $errors = $validator->validate($user, null, ['registration']);
 
         if(count($errors)){
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);

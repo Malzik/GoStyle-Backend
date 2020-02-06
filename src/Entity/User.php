@@ -11,7 +11,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @UniqueEntity("email", message="L'email a déjà été utilisé")
+ * @UniqueEntity("email", message="L'email a déjà été utilisé", groups={"registration"})
  */
 class User implements UserInterface, \JsonSerializable
 {
