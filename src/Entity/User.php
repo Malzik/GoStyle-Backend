@@ -55,7 +55,7 @@ class User implements UserInterface, \JsonSerializable
     private $last_name;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")
+     * @ORM\OneToMany(targetEntity="UserOffer", mappedBy="offer")
      */
     private $offers;
 
