@@ -25,7 +25,6 @@ class AppFixtures extends Fixture
             $user->setLastName($faker->lastName);
             $user->setEmail($faker->email);
             $user->setPassword($faker->password);
-            $manager->persist($user);
             for($l= 0; $l < 3; $l++){
                 $offer = new Offer();
                 $offer->setCode($faker->sha1);
@@ -34,12 +33,9 @@ class AppFixtures extends Fixture
                 $offer->setName($faker->text(15));
                 $offer->setLogo("https://image.flaticon.com/icons/svg/1973/1973782.svg");
                 $manager->persist($offer);
-                $useroffer = new UserOffer();
-                $useroffer->setUser($user);
-                $useroffer->setOffer($offer);
-
-                $manager->persist($useroffer);
+                $user->addOffer($offer);
             }
+            $manager->persist($user);
         }
         $manager->flush();
     }
