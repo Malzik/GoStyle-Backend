@@ -26,6 +26,12 @@ Première étape vous devez cloner le projet sur votre machine en tapant la comm
 ```
 git clone https://github.com/Malzik/GoStyle-Backend.git
 ```
+Dupliquez le .env.example et le renommer en .env. Modifiez les champs suivants.
+
+```
+DATABASE_URL (Lien connexion à la base de données)
+JWT_PASSPHRASE (Mot de passe du certificat SSL)
+```
 
 Quand le projet est cloner dans un dossier local, se rendre dans  celui-ci et lancez la commande d'installation de composer
 
@@ -37,13 +43,6 @@ Afin de mettre à jour les paquets entrez la commande de mise à jour
 
 ```
 composer update
-```
-
-Dupliquez le .env.example et le renommer en .env. Modifiez les champs suivants.
-
-```
-DATABASE_URL (Lien connexion à la base de données)
-JWT_PASSPHRASE (Mot de passe du certificat SSL)
 ```
 
 Entrez la commande de création de base de données
