@@ -15,6 +15,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Swagger\Annotations as SWG;
+use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
@@ -134,31 +137,28 @@ class UserController extends AbstractController
      * )
      * @SWG\Tag(name="Users")
      */
-    public function updatePassword(Request $request, ValidatorInterface $validator)
+    public function updatePassword(Request $request, ValidatorInterface $validator, UserPasswordEncoderInterface $passwordEncoder)
     {
         $currentUser = $this->userRepository->find($this->getUser()->getId());
         if(empty($currentUser))
             return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
 
         $request = json_decode($request->getContent(), true);
-        $oldPassword = $request["password"];
-        if($oldPassword === $currentUser->getPassword()) {
-            $newPassword = $request["new_password"];
 
-            $currentUser->setPassword($newPassword);
-            $errors = $validator->validate($currentUser, null, ["password"]);
+        $newPassword = $request["new_password"];
 
-            if(count($errors)) {
-                return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
-            }
+        $newPassword = $passwordEncoder->encodePassword($currentUser, $newPassword);
+        $currentUser->setPassword($newPassword);
+        $errors = $validator->validate($currentUser, null, ["password"]);
 
-            $em = $this->getDoctrine()->getManager();
-            $em->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT, ["Link" => "http://localhost/api/login"]);
-        } else {
-            return new JsonResponse(["password" => "L'ancien mot de passe est invalide "], Response::HTTP_BAD_REQUEST, ["Link" => "http://localhost/api/login"/*$this->generateUrl("api_login", null, 0)*/]);
+        if(count($errors)) {
+            return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
+
+        $em = $this->getDoctrine()->getManager();
+        $em->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT, ["Link" => "http://localhost/api/login"]);
     }
 
     /**
@@ -184,8 +184,11 @@ class UserController extends AbstractController
      * @SWG\Tag(name="Users")
      * @Security(name="Bearer")
      */
-    public function createUser(Request $request, ValidatorInterface $validator)
+    public function createUser(Request $request, ValidatorInterface $validator, UserPasswordEncoderInterface $passwordEncoder)
     {
+        /**
+         * @var User $user
+         */
         $user = $this->getUnserializedUser($request);
         if(empty($user))
             return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
@@ -195,7 +198,8 @@ class UserController extends AbstractController
         if(count($errors)){
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
-
+        $password = $passwordEncoder->encodePassword($user, $user->getPassword());
+        $user->setPassword($password);
         $em = $this->getDoctrine()->getManager();
         $em->persist($user);
         $em->flush();
