@@ -218,6 +218,9 @@ class UserController extends AbstractController
         $offer = $this->offerRepository->findOneByCode($offer["code"]);
 
         $currentUser->addOffer($offer);
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($currentUser);
+        $em->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
