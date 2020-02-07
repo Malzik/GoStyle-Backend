@@ -14,6 +14,7 @@ class AppFixtures extends Fixture
 {
     public function load(ObjectManager $manager)
     {
+        $marques = ['dcshoes', 'supreme', 'tommyJeans', 'vans', 'adidas', 'bershka'];
         $package = new Package(new EmptyVersionStrategy());
         $faker = Factory::create('fr_FR');
 
@@ -31,18 +32,7 @@ class AppFixtures extends Fixture
                 $offer->setDeadline($faker->dateTimeThisMonth);
                 $offer->setDescription($faker->paragraph);
                 $offer->setName($faker->text(15));
-                $rand = $faker->numberBetween(0,3);
-                switch ($rand){
-                    case 0:
-                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/painters.png');
-                        break;
-                    case 1:
-                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/PromoSkateboard.png');
-                        break;
-                    default:
-                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/grafiti.png');
-                        break;
-                };
+                $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/' . $marques[array_rand($marques, 1)] . '.png');
                 $manager->persist($offer);
                 $user->addOffer($offer);
             }
