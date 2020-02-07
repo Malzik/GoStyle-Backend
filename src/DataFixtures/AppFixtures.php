@@ -5,7 +5,6 @@ namespace App\DataFixtures;
 use Symfony\Component\Asset\Package;
 use App\Entity\Offer;
 use App\Entity\User;
-use App\Entity\UserOffer;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -25,13 +24,25 @@ class AppFixtures extends Fixture
             $user->setLastName($faker->lastName);
             $user->setEmail($faker->email);
             $user->setPassword($faker->password);
+            $user->setRoles([]);
             for($l= 0; $l < 3; $l++){
                 $offer = new Offer();
                 $offer->setCode($faker->sha1);
                 $offer->setDeadline($faker->dateTimeThisMonth);
                 $offer->setDescription($faker->paragraph);
                 $offer->setName($faker->text(15));
-                $offer->setLogo("https://image.flaticon.com/icons/svg/1973/1973782.svg");
+                $rand = $faker->numberBetween(0,3);
+                switch ($rand){
+                    case 0:
+                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/painters.png');
+                        break;
+                    case 1:
+                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/PromoSkateboard.png');
+                        break;
+                    default:
+                        $offer->setLogo('https://gostyle.sepradc-serv.ovh/images/grafiti.png');
+                        break;
+                };
                 $manager->persist($offer);
                 $user->addOffer($offer);
             }
