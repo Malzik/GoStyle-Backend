@@ -87,7 +87,7 @@ class UserController extends AbstractController
             "email" => $profil->getEmail(),
             "offers" => $offers
         ];
-        return $this->getJsonResponse($response);
+        return $this->getJsonResponse($response[0]);
     }
 
     /**
