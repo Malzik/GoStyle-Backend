@@ -65,7 +65,29 @@ class UserController extends AbstractController
         $profil = $this->userRepository->find($this->getUser()->getId());
         if(empty($profil))
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        return $this->getJsonResponse($profil);
+
+        $offers = array();
+        foreach ($profil->getOffers() as $offer){
+            $offers[] = [
+                "name" => $offer->getName(),
+                "code" => $offer->getCode(),
+                "description" => $offer->getDescription(),
+                "logo" => $offer->getLogo(),
+                "deadline" => $offer->getDeadline()->format("Y-m-d"),
+                "_links" => [
+                    "item" => [
+                        "self" => $this->generateUrl("apioffer", ["code"=>$offer->getCode()], 0)
+                    ]
+                ]
+            ];
+        }
+        $response[] = [
+            "last_name" => $profil->getLastName(),
+            "first_name" => $profil->getFirstName(),
+            "email" => $profil->getEmail(),
+            "offers" => $offers
+        ];
+        return $this->getJsonResponse($response);
     }
 
     /**
