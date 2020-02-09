@@ -11,8 +11,12 @@ namespace App\Tests\Controller;
 use App\Controller\UserController;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserControllerTest extends TestCase
 {
@@ -54,15 +58,23 @@ class UserControllerTest extends TestCase
 
     public function testCreateUser()
     {
-//        $request = $this->createMock(Request::class);
-//
-//        $request->expects($this->any())->method('getContent')->willReturn("{\"first_name\": \"firstName\",\"last_name\": \"lastName\",\"email\": \"email\",\"password\": \"password\"");
-//        $userRepository = $this->createMock(UserRepository::class);
-//
-//        $userController = new UserController($userRepository);
-//        $createUser = $userController->createUser($request);
-//        $createUser = json_decode($createUser->getContent(), true);
-//        $this->assertEquals(404, $createUser);
+        $request = $this->createMock(Request::class);
+
+        $request
+            ->expects($this->any())
+            ->method('getContent')
+            ->willReturn("{\"first_name\": \"firstName\",\"last_name\": \"lastName\",\"email\": \"email\",\"password\": \"password\"}");
+        $userRepository = $this->createMock(UserRepository::class);
+        $serializer = $this->createMock(SerializerInterface::class);
+
+        $validator = Validation::createValidatorBuilder()
+            ->enableAnnotationMapping()
+            ->getValidator();
+
+        $userController = new UserController($userRepository, $serializer);
+        $createUser = $userController->createUser($request, $validator);
+        $createUser = json_decode($createUser->getContent(), true);
+        $this->assertEquals(404, $createUser);
     }
 
     public function testUpdateProfil()

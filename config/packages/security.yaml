@@ -1,7 +1,7 @@
 security:
     encoders:
         App\Entity\User:
-            algorithm: plaintext
+            algorithm: auto
 
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
@@ -23,6 +23,14 @@ security:
                 check_path: /api/login
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        register:
+            pattern: ^/api/register
+            stateless: true
+            anonymous: true
+        doc:
+            pattern: ^/api/doc
+            stateless: true
+            anonymous: true
         api:
             pattern: ^/api
             stateless: true

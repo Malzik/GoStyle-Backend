@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Swagger\Annotations as SWG;
 
 /**
  * Class LoginController
@@ -18,26 +20,23 @@ use Symfony\Component\Routing\Annotation\Route;
 class LoginController extends AbstractController
 {
     /**
-     * @Route("/register", name="create.user", methods={"POST"})
-     * @param Request $request
-     * @return JsonResponse
+     * @Route("/login", name="login", methods={"POST"})
+     * * @SWG\Response(
+     *     response=200,
+     *     description="Login",
+     * )
+     * @SWG\Parameter(
+     *     name="User",
+     *     in="body",
+     *     description="The field used to login",
+     *     @SWG\Schema(
+     *         type="object",
+     *         @SWG\Property(property="email", type="string"),
+     *         @SWG\Property(property="password", type="string")
+     *     )
+     * )
+     * @SWG\Tag(name="Users")
      */
-    public function createUser(Request $request)
-    {
-        $user = new User();
-
-        $form = $this->createForm(UserType::class, $user);
-        $data = json_decode($request->getContent(),true);
-        $form->submit($data);
-
-        if($form->isSubmitted() && $form->isValid()){
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($user);
-            $em->flush();
-
-            return new JsonResponse(Response::HTTP_CREATED);
-        }
-
-        return new JsonResponse(Response::HTTP_BAD_REQUEST);
+    public function login() {
     }
 }

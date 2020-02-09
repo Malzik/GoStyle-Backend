@@ -2,12 +2,18 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\JoinTable;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity("email", message="L'email a déjà été utilisé", groups={"registration"})
  */
 class User implements UserInterface, \JsonSerializable
 {
@@ -20,6 +26,8 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\NotBlank(message="L'email ne doit pas être vide", groups={"registration", "profil"})
+     * @Assert\Email(message="Le format du mail n'est pas valide", groups={"registration", "profil"})
      */
     private $email;
 
@@ -31,16 +39,20 @@ class User implements UserInterface, \JsonSerializable
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
+     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli", groups={"registration", "password"})
+     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court", groups={"registration", "password"})
      */
     private $password;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le prenom ne doit pas être vide", groups={"registration", "profil"})
      */
 
     private $first_name;
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le nom ne doit pas être vide", groups={"registration", "profil"})
      */
     private $last_name;
 
@@ -48,6 +60,15 @@ class User implements UserInterface, \JsonSerializable
      * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")
      */
     private $offers;
+
+    /**
+     * User constructor.
+     */
+    public function __construct()
+    {
+        $this->offers = new ArrayCollection();
+    }
+
 
     public function getId(): ?int
     {
@@ -195,8 +216,8 @@ class User implements UserInterface, \JsonSerializable
         }
         /** @var Offer $offer */
         return [
-            "firstName" => $this->first_name,
-            "lastName" => $this->last_name,
+            "first_name" => $this->first_name,
+            "last_name" => $this->last_name,
             "email" => $this->email,
             "offers" => $offers
         ];

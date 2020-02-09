@@ -33,6 +33,12 @@ Quand le projet est cloner dans un dossier local, se rendre dans  celui-ci et la
 composer install
 ```
 
+Afin de mettre à jour les paquets entrez la commande de mise à jour 
+
+```
+composer update
+```
+
 Dupliquez le .env.example et le renommer en .env. Modifiez les champs suivants.
 
 ```
@@ -56,6 +62,12 @@ Générez des données avec la commande suivante
 
 ```
 php bin/console doctrine:fixtures:load
+```
+
+Une fois toutes les étapes complétées entrez la commande de lancement du serveur
+
+```
+symfony server:start
 ```
 
 ## Lancer les tests
