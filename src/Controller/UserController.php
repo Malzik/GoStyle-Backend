@@ -66,7 +66,7 @@ class UserController extends AbstractController
      * @Security(name="Bearer")
      * @return JsonResponse
      */
-    public function profil()
+    public function profile()
     {
         try {
             $profile = $this->userManager->findProfile($this->getUser());
@@ -112,7 +112,7 @@ class UserController extends AbstractController
 
         try {
             $token = $this->userManager->updateUser($this->getUser(), $user);
-            return $this->getJsonResponse($token, Response::HTTP_OK, ["Link" => $this->generateUrl("login", null, 0)]);
+            return $this->getJsonResponse($token, Response::HTTP_OK, ["Link" => $this->generateUrl("login", [], 0)]);
         } catch (\Exception $e) {
             return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }

@@ -6,6 +6,8 @@ namespace App\Manager;
 
 use Doctrine\ORM\EntityManager;
 use App\Entity\Offer;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 class OfferManager
 {
@@ -13,10 +15,15 @@ class OfferManager
      * @var EntityManager $entityManager
      */
     private $entityManager;
+    /**
+     * @var RouterInterface
+     */
+    private $router;
 
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, RouterInterface $router)
     {
         $this->entityManager = $entityManager;
+        $this->router = $router;
     }
 
     public function findByCode($code)
@@ -38,7 +45,7 @@ class OfferManager
                 "deadline" => $offer->getDeadline()->format("Y-m-d"),
                 "_links" => [
                     "item" => [
-                        "self" => $this->generateUrl("apioffer", ["code"=>$offer->getCode()], 0)
+                        "self" => $this->router->generate("apioffer", ["code"=>$offer->getCode()], 0)
                     ]
                 ]
             ];

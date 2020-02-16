@@ -10,7 +10,9 @@ namespace App\Tests\Controller;
 
 use App\Controller\OfferController;
 use App\Entity\Offer;
+use App\Manager\OfferManager;
 use App\Repository\OfferRepository;
+use JMS\Serializer\SerializerInterface;
 use PHPUnit\Framework\TestCase;
 
 class OfferControllerTest extends TestCase
@@ -25,20 +27,23 @@ class OfferControllerTest extends TestCase
     {
         $offer = new Offer();
         $offer->setName("Offre 1");
-        $offer->setCode("Code");
+        $offer->setCode("code");
         $offer->setDescription("Description 1");
         $offer->setDeadline(new \DateTime());
         $offer->setLogo("logo.png");
 
-        $offerRepository = $this->createMock(OfferRepository::class);
+        $offerManager = $this->createMock(OfferManager::class);
+        $serializer = $this->createMock(SerializerInterface::class);
 
-        $offerRepository->expects($this->any())
-            ->method('find')
-            ->willReturn($offer);
+        $offerManager->expects($this->any())
+            ->method('findByCode')
+            ->willReturn("LOL");
 
-        $offerController = new OfferController($offerRepository);
-        $offers = $offerController->offerById(1);
-        $offers = json_decode($offers->getContent(), true);
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offerByCode("code");
+
+        $offers = json_decode($result->getContent(), true);
+        dd($result->getStatusCode(), $offers);
         $this->assertEquals($offer->getName(), $offers["name"]);
     }
 
@@ -79,15 +84,18 @@ class OfferControllerTest extends TestCase
         $offer2->setDeadline(new \DateTime());
         $offer2->setLogo("logo.png");
 
-        $offerRepository = $this->createMock(OfferRepository::class);
+        $offerManager = $this->createMock(OfferManager::class);
+        $serializer = $this->createMock(SerializerInterface::class);
 
-        $offerRepository->expects($this->any())
+        $offerManager->expects($this->any())
             ->method('findAll')
             ->willReturn([$offer1, $offer2]);
 
-        $offerController = new OfferController($offerRepository);
+        $offerController = new OfferController($offerManager, $serializer);
         $offers = $offerController->offers();
         $offers = json_decode($offers->getContent(), true);
+        var_dump($offer2);
+        dd($offers);
         $this->assertEquals($offer2->getName(), $offers[1]["name"]);
     }
 }

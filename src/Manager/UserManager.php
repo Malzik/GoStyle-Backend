@@ -6,6 +6,7 @@ namespace App\Manager;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,7 +32,7 @@ class UserManager
      */
     private $offerManager;
 
-    public function __construct(EntityManager $entityManager, OfferManager $offerManager, RouterInterface $router, JWTTokenManagerInterface $JWTTokenManager)
+    public function __construct(EntityManagerInterface $entityManager, OfferManager $offerManager, RouterInterface $router, JWTTokenManagerInterface $JWTTokenManager)
     {
         $this->entityManager = $entityManager;
         $this->router = $router;
