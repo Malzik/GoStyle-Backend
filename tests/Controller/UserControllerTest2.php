@@ -29,7 +29,8 @@ class UserControllerTest2 extends WebTestCase
 
         $token = json_decode($auth->getBody()->read(1024), true)["token"];
 
-        $response = $client->request("GET", $client->getConfig("base_uri") . 'user', ['http_errors' => false, 'Authorization' => "Bearer $token"]);
+        $response = $client->request("GET", $client->getConfig("base_uri") . 'user',
+            ['http_errors'=>false, "headers" => ["Authorization" => "Bearer $token"]]);
 
         $this->assertEquals(200, $response->getStatusCode());
     }
