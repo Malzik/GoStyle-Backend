@@ -10,6 +10,8 @@ namespace App\Tests\Controller;
 
 use App\Controller\UserController;
 use App\Entity\User;
+use App\Manager\OfferManager;
+use App\Manager\UserManager;
 use App\Repository\UserRepository;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
@@ -36,7 +38,7 @@ class UserControllerTest extends TestCase
             ->method('find')
             ->willReturn($user);
 
-        $userController = new UserController($userRepository);
+        $userController = new UserController();
         $profil = $userController->profil();
         $profil = json_decode($profil->getContent(), true);
         $this->assertEquals($user->getEmail(), $profil["email"]);

@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Manager\OfferManager;
 use App\Repository\OfferRepository;
+use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,17 +22,23 @@ use App\Entity\Offer;
 class OfferController extends AbstractController
 {
     /**
-     * @var OfferRepository
+     * @var OfferManager
      */
-    private $offerRepository;
+    private $offerManager;
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
 
     /**
      * OfferController constructor.
-     * @param OfferRepository $offerRepository
+     * @param OfferManager $offerManager
+     * @param SerializerInterface $serializer
      */
-    public function __construct(OfferRepository $offerRepository)
+    public function __construct(OfferManager $offerManager, SerializerInterface $serializer)
     {
-        $this->offerRepository = $offerRepository;
+        $this->offerManager = $offerManager;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -48,22 +56,12 @@ class OfferController extends AbstractController
      **/
     public function offers()
     {
-        $offers = $this->offerRepository->findAll();
-        foreach ($offers as $offer){
-            $response[] = [
-                "name" => $offer->getName(),
-                "code" => $offer->getCode(),
-                "description" => $offer->getDescription(),
-                "logo" => $offer->getLogo(),
-                "deadline" => $offer->getDeadline()->format("Y-m-d"),
-                "_links" => [
-                    "item" => [
-                        "self" => $this->generateUrl("apioffer", ["code"=>$offer->getCode()], 0)
-                    ]
-                ]
-            ];
+        try {
+            $offers = $this->offerManager->findAll();
+            return $this->getJsonResponse($offers);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }
-        return new JsonResponse($response);
     }
 
     /**
@@ -80,9 +78,25 @@ class OfferController extends AbstractController
      */
     public function offerByCode(string $code)
     {
-        $offer = $this->offerRepository->findOneByCode($code);
-        if(empty($offer))
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        return new JsonResponse($this->offerRepository->findOneByCode($code));
+        try {
+            $offer = $this->offerManager->findByCode($code);
+            if(empty($offer))
+                return $this->getJsonResponse(null, Response::HTTP_NOT_FOUND);
+            return $this->getJsonResponse($offer);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    private function getJsonResponse($data = null, int $status = 200, $headers = []) : JsonResponse
+    {
+        $serializedData = $data;
+        if (!is_null($data)){
+            $serializedData = $this->serializer->serialize($data, 'json');
+        }
+        $response = new JsonResponse(null, $status, $headers);
+        $response->setContent($serializedData);
+
+        return $response;
     }
 }

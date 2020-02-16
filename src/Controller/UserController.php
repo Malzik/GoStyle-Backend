@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Manager\OfferManager;
+use App\Manager\UserManager;
 use App\Repository\OfferRepository;
 use App\Repository\UserRepository;
 use JMS\Serializer\SerializerInterface;
@@ -29,25 +31,28 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserController extends AbstractController
 {
     /**
-     * @var UserRepository
+     * @var UserManager
      */
-    private $userRepository;
+    private $userManager;
+
+    /**
+     * @var OfferManager
+     */
+    private $offerManager;
 
     private $serializer;
-    /**
-     * @var OfferRepository
-     */
-    private $offerRepository;
 
     /**
      * UserController constructor.
-     * @param UserRepository $userRepository
+     * @param UserManager $userManager
+     * @param OfferManager $offerManager
+     * @param SerializerInterface $serializer
      */
-    public function __construct(UserRepository $userRepository, OfferRepository $offerRepository, SerializerInterface $serializer)
+    public function __construct(UserManager $userManager, OfferManager $offerManager, SerializerInterface $serializer)
     {
-        $this->userRepository = $userRepository;
+        $this->userManager = $userManager;
+        $this->offerManager = $offerManager;
         $this->serializer = $serializer;
-        $this->offerRepository = $offerRepository;
     }
 
     /**
@@ -59,40 +64,22 @@ class UserController extends AbstractController
      * )
      * @SWG\Tag(name="Users")
      * @Security(name="Bearer")
+     * @return JsonResponse
      */
-    public function profil(Request $request)
+    public function profil()
     {
-        $profil = $this->userRepository->find($this->getUser()->getId());
-        if(empty($profil))
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-
-        $offers = array();
-        foreach ($profil->getOffers() as $offer){
-            $offers[] = [
-                "name" => $offer->getName(),
-                "code" => $offer->getCode(),
-                "description" => $offer->getDescription(),
-                "logo" => $offer->getLogo(),
-                "deadline" => $offer->getDeadline()->format("Y-m-d"),
-                "_links" => [
-                    "item" => [
-                        "self" => $this->generateUrl("apioffer", ["code"=>$offer->getCode()], 0)
-                    ]
-                ]
-            ];
+        try {
+            $profile = $this->userManager->findProfile($this->getUser());
+            return $this->getJsonResponse($profile['data'], $profile['status']);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }
-        $response[] = [
-            "last_name" => $profil->getLastName(),
-            "first_name" => $profil->getFirstName(),
-            "email" => $profil->getEmail(),
-            "offers" => $offers
-        ];
-        return $this->getJsonResponse($response[0]);
     }
 
     /**
      * @Route("/user", name="update.user", methods={"PUT"})
      * @param Request $request
+     * @param ValidatorInterface $validator
      * @return JsonResponse
      * * @SWG\Response(
      *     response=204,
@@ -113,12 +100,9 @@ class UserController extends AbstractController
      * @SWG\Tag(name="Users")
      * @Security(name="Bearer")
      */
-    public function updateProfil(Request $request, ValidatorInterface $validator, JWTTokenManagerInterface $JWTTokenManager)
+    public function updateProfil(Request $request, ValidatorInterface $validator)
     {
         $user = $this->getUnserializedUser($request);
-        $currentUser = $this->userRepository->find($this->getUser()->getId());
-        if(empty($currentUser))
-            return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
 
         $errors = $validator->validate($user, null, ["profil"]);
 
@@ -126,20 +110,19 @@ class UserController extends AbstractController
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
 
-        $currentUser->setFirstName($user->getFirstName());
-        $currentUser->setLastName($user->getLastName());
-        $currentUser->setEmail($user->getEmail());
-
-        $em = $this->getDoctrine()->getManager();
-        $em->flush();
-
-        $token = $JWTTokenManager->create($currentUser);
-        return new JsonResponse(["token" => $token], Response::HTTP_OK, ["Link" => "http://localhost/api/login"]);
+        try {
+            $token = $this->userManager->updateUser($this->getUser(), $user);
+            return $this->getJsonResponse($token, Response::HTTP_OK, ["Link" => $this->generateUrl("login", null, 0)]);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
     }
 
     /**
      * @Route("/user/password", name="update.userpassword", methods={"PUT"})
      * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param UserPasswordEncoderInterface $passwordEncoder
      * @return JsonResponse
      * * @SWG\Response(
      *     response=204,
@@ -161,16 +144,15 @@ class UserController extends AbstractController
      */
     public function updatePassword(Request $request, ValidatorInterface $validator, UserPasswordEncoderInterface $passwordEncoder)
     {
-        $currentUser = $this->userRepository->find($this->getUser()->getId());
-        if(empty($currentUser))
-            return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
-
         $request = json_decode($request->getContent(), true);
 
         $newPassword = $request["new_password"];
 
+        $currentUser = $this->userManager->findById($this->getUser());
+
         $newPassword = $passwordEncoder->encodePassword($currentUser, $newPassword);
         $currentUser->setPassword($newPassword);
+
         $errors = $validator->validate($currentUser, null, ["password"]);
 
         if(count($errors)) {
@@ -180,12 +162,14 @@ class UserController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $em->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT, ["Link" => "http://localhost/api/login"]);
+        return $this->getJsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
     /**
      * @Route("/register", name="create.user", methods={"POST"})
      * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param UserPasswordEncoderInterface $passwordEncoder
      * @return JsonResponse
      * @SWG\Response(
      *     response=201,
@@ -212,19 +196,21 @@ class UserController extends AbstractController
          * @var User $user
          */
         $user = $this->getUnserializedUser($request);
-        if(empty($user))
-            return new JsonResponse("User not found", Response::HTTP_NOT_FOUND);
 
         $errors = $validator->validate($user, null, ['registration']);
 
         if(count($errors)){
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
+
         $password = $passwordEncoder->encodePassword($user, $user->getPassword());
         $user->setPassword($password);
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
+
+        try {
+            $this->userManager->createUser($user);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
 
         return new JsonResponse(null, Response::HTTP_CREATED, ["Link" => "http://localhost/api/login"/*$this->generateUrl("api_login", null, 0)*/]);
     }
@@ -235,25 +221,23 @@ class UserController extends AbstractController
      * @return JsonResponse
      */
     public function addOfferToUser(Request $request) {
-        $currentUser = $this->userRepository->find($this->getUser()->getId());
         $offer = json_decode($request->getContent(), true);
-        $offer = $this->offerRepository->findOneByCode($offer["code"]);
 
-        $currentUser->addOffer($offer);
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($currentUser);
-        $em->flush();
+        try {
+            $this->userManager->addOfferToUser($this->getUser(), $offer["code"]);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
     private function getUnserializedUser(Request $request){
-        $user = $this->serializer->deserialize(
+        return $this->serializer->deserialize(
             $request->getContent(),
             User::class,
             'json'
         );
-        return $user;
     }
 
     private function getJsonResponse($data = null, int $status = 200, $headers = []) : JsonResponse
