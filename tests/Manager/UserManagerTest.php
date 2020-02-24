@@ -64,7 +64,6 @@ class UserManagerTest extends TestCase
 
     public function testCreateUser()
     {
-        $userRepository = $this->createMock(UserRepository::class);
         $mockRouter = $this->createMock(Router::class);
         $mockOfferManager = $this->createMock(OfferManager::class);
         $mockJwtManager = $this->createMock(JWTTokenManagerInterface::class);
@@ -123,7 +122,7 @@ class UserManagerTest extends TestCase
         $userManager = new UserManager($mockEm, $mockOfferManager, $mockRouter, $mockJwtManager);
         $userManager->addOfferToUser($this->users[1], "code1");
 
-        $this->assertEquals($offer, $this->users[1]->getOffers()[0]);
+        $this->assertEquals($offer->getName(), $this->users[1]->getOffers()[0]->getName());
     }
 
     public function testUpdateUser()
