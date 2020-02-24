@@ -140,7 +140,6 @@ class UserManagerTest extends TestCase
     }
     public function testUpdatePassword()
     {
-        $userRepository = $this->createMock(UserRepository::class);
         $mockRouter = $this->createMock(Router::class);
         $mockOfferManager = $this->createMock(OfferManager::class);
         $mockJwtManager = $this->createMock(JWTTokenManagerInterface::class);

@@ -113,7 +113,7 @@ class UserController extends AbstractController
 
         try {
             $token = $this->userManager->updateUser($this->getUser(), $user);
-            return $this->getJsonResponse($token, Response::HTTP_NOT_FOUND);
+            return $this->getJsonResponse($token, Response::HTTP_NO_CONTENT);
         } catch (\Exception $e) {
             return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }
