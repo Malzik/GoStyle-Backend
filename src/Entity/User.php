@@ -69,7 +69,6 @@ class User implements UserInterface, \JsonSerializable
         $this->offers = new ArrayCollection();
     }
 
-
     public function getId(): ?int
     {
         return $this->id;

@@ -10,12 +10,25 @@ namespace App\Tests\Controller;
 
 use App\Controller\UserController;
 use App\Entity\User;
+use App\EventListener\JWTListener;
 use App\Manager\OfferManager;
 use App\Manager\UserManager;
 use Exception;
 use JMS\Serializer\SerializerInterface;
+use Lcobucci\JWT\Token;
+use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\JWTUserToken;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\Guard\JWTTokenAuthenticator;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTManager;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\FrameworkBundle\Controller\ControllerTrait;
+use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\UsageTrackingTokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -43,14 +56,23 @@ class UserControllerTest extends TestCase
     {
         $userManager = $this->createMock(UserManager::class);
         $userManager->expects($this->once())
-            ->method('findProfile');
+            ->method('findProfile')
+            ->willReturn(["data" => $this->users[0], "status" => 200]);
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->expects($this->once())
+            ->method("serialize")
+            ->willReturn(json_encode($this->users[0]));
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
 
         $userController = new UserController($userManager, $offerManager, $serializer);
+        $userController->setContainer($container);
         $result = $userController->profile();
 
-        $this->assertEquals(201, $result->getStatusCode());
+        $this->assertEquals(200, $result->getStatusCode());
+        $this->assertEquals(json_encode($this->users[0]), $result->getContent());
     }
 
     public function testProfileThrowException()
@@ -61,32 +83,49 @@ class UserControllerTest extends TestCase
             ->willThrowException(new Exception("fake exception", 500));
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->expects($this->once())
+            ->method("serialize")
+            ->willReturn(json_encode($this->users[0]));
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
 
         $userController = new UserController($userManager, $offerManager, $serializer);
-        $profile = $userController->profile();
-        $this->assertEquals(500, $profile->getStatusCode());
+        $userController->setContainer($container);
+        $result = $userController->profile();
+
+        $this->assertEquals(500, $result->getStatusCode());
     }
 
     public function testUpdateProfile()
     {
         $userManager = $this->createMock(UserManager::class);
         $userManager->expects($this->once())
-            ->method('updateUser');
+            ->method('updateUser')
+            ->willReturn("token");
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer->expects($this->any())
             ->method("deserialize")
             ->willReturn($this->users[0]);
+        $serializer->expects($this->any())
+            ->method("serialize")
+            ->willReturn(json_encode($this->users[0]));
         $validatorMock = $this->createMock(ValidatorInterface::class);
         $validatorMock->expects($this->once())
             ->method("validate")
             ->willReturn([]);
         $request = new Request();
 
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $test = new Container();
+        $test->set("security.token_storage", $mockJwt);
+
         $userController = new UserController($userManager, $offerManager, $serializer);
+        $userController->setContainer($test);
         $result = $userController->updateProfil($request, $validatorMock);
 
-        $this->assertEquals(200, $result->getStatusCode());
+        $this->assertEquals(204, $result->getStatusCode());
     }
 
     public function testUpdateProfileWithInvalidatedUser()
@@ -118,19 +157,27 @@ class UserControllerTest extends TestCase
         $userManager = $this->createMock(UserManager::class);
         $userManager->expects($this->once())
             ->method('updateUser')
-            ->willThrowException(new Exception("fake exception", 500));
+            ->willThrowException(new Exception("fakeexception", 500));
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->any())
+        $serializer->expects($this->once())
             ->method("deserialize")
             ->willReturn($this->users[0]);
+        $serializer->expects($this->once())
+            ->method("serialize")
+            ->willReturn(json_encode($this->users[0]));
         $validatorMock = $this->createMock(ValidatorInterface::class);
         $validatorMock->expects($this->once())
             ->method("validate")
             ->willReturn([]);
         $request = new Request();
 
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $test = new Container();
+        $test->set("security.token_storage", $mockJwt);
+
         $userController = new UserController($userManager, $offerManager, $serializer);
+        $userController->setContainer($test);
         $result = $userController->updateProfil($request, $validatorMock);
 
         $this->assertEquals(500, $result->getStatusCode());
@@ -140,13 +187,12 @@ class UserControllerTest extends TestCase
     {
         $userManager = $this->createMock(UserManager::class);
         $userManager->expects($this->once())
+            ->method('updatePassword');
+        $userManager->expects($this->once())
             ->method('findById')
             ->willReturn($this->users[0]);
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->any())
-            ->method("deserialize")
-            ->willReturn($this->users[0]);
         $validatorMock = $this->createMock(ValidatorInterface::class);
         $validatorMock->expects($this->once())
             ->method("validate")
@@ -155,11 +201,16 @@ class UserControllerTest extends TestCase
         $userPasswordeEncodeMock->expects($this->once())
             ->method("encodePassword")
             ->willReturn("encodedpassword");
-        $request = new Request();
-        $request->request->set("new_password", "new_password");
+
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())->method("getContent")->willReturn(json_encode(["new_password" => "password"]));
 
         $userController = new UserController($userManager, $offerManager, $serializer);
-        $result = $userController->updatePassword($request, $validatorMock, $userPasswordeEncodeMock);
+        $userController->setContainer($container);
+        $result = $userController->updatePassword($mockRequest, $validatorMock, $userPasswordeEncodeMock);
 
         $this->assertEquals(204, $result->getStatusCode());
     }
@@ -172,27 +223,55 @@ class UserControllerTest extends TestCase
             ->willReturn($this->users[0]);
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
-        $serializer->expects($this->any())
-            ->method("deserialize")
-            ->willReturn($this->users[0]);
-        $serializer->expects($this->once())
-            ->method("serialize")
-            ->willReturn(json_encode(["password" => "bad password"]));
         $validatorMock = $this->createMock(ValidatorInterface::class);
         $validatorMock->expects($this->once())
             ->method("validate")
             ->willReturn(["password" => "bad password"]);
         $userPasswordeEncodeMock = $this->createMock(UserPasswordEncoderInterface::class);
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())->method("getContent")->willReturn(json_encode(["new_password" => "password"]));
+
+        $userController = new UserController($userManager, $offerManager, $serializer);
+        $userController->setContainer($container);
+        $result = $userController->updatePassword($mockRequest, $validatorMock, $userPasswordeEncodeMock);
+
+        $this->assertEquals(400, $result->getStatusCode());
+    }
+
+    public function testUpdatePasswordThrowException()
+    {
+        $userManager = $this->createMock(UserManager::class);
+        $userManager->expects($this->once())
+            ->method('updatePassword')
+            ->willThrowException(new Exception("fake exception", 500));
+        $userManager->expects($this->once())
+            ->method('findById')
+            ->willReturn($this->users[0]);
+        $offerManager = $this->createMock(OfferManager::class);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $validatorMock = $this->createMock(ValidatorInterface::class);
+        $validatorMock->expects($this->once())
+            ->method("validate")
+            ->willReturn([]);
+        $userPasswordeEncodeMock = $this->createMock(UserPasswordEncoderInterface::class);
         $userPasswordeEncodeMock->expects($this->once())
             ->method("encodePassword")
             ->willReturn("encodedpassword");
-        $request = new Request();
-        $request->request->set("new_password", "new_password");
+
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())->method("getContent")->willReturn(json_encode(["new_password" => "password"]));
 
         $userController = new UserController($userManager, $offerManager, $serializer);
-        $result = $userController->updatePassword($request, $validatorMock, $userPasswordeEncodeMock);
+        $userController->setContainer($container);
+        $result = $userController->updatePassword($mockRequest, $validatorMock, $userPasswordeEncodeMock);
 
-        $this->assertEquals(400, $result->getStatusCode());
+        $this->assertEquals(500, $result->getStatusCode());
     }
 
     public function testCreateUser()
@@ -280,11 +359,16 @@ class UserControllerTest extends TestCase
             ->method('addOfferToUser');
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
-        $request = new Request();
-        $request->request->set("code", "code1");
+
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())->method("getContent")->willReturn(json_encode(["code" => "fakecode"]));
 
         $userController = new UserController($userManager, $offerManager, $serializer);
-        $result = $userController->addOfferToUser($request);
+        $userController->setContainer($container);
+        $result = $userController->addOfferToUser($mockRequest);
 
         $this->assertEquals(204, $result->getStatusCode());
     }
@@ -297,11 +381,16 @@ class UserControllerTest extends TestCase
             ->willThrowException(new Exception("fake exception", 500));
         $offerManager = $this->createMock(OfferManager::class);
         $serializer = $this->createMock(SerializerInterface::class);
-        $request = new Request();
-        $request->request->set("code", "code1");
+
+        $mockJwt = $this->createMock(TokenStorage::class);
+        $container = new Container();
+        $container->set("security.token_storage", $mockJwt);
+        $mockRequest = $this->createMock(Request::class);
+        $mockRequest->expects($this->once())->method("getContent")->willReturn(json_encode(["code" => "fakecode"]));
 
         $userController = new UserController($userManager, $offerManager, $serializer);
-        $result = $userController->addOfferToUser($request);
+        $userController->setContainer($container);
+        $result = $userController->addOfferToUser($mockRequest);
 
         $this->assertEquals(500, $result->getStatusCode());
     }

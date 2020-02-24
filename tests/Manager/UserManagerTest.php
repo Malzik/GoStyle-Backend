@@ -138,4 +138,16 @@ class UserManagerTest extends TestCase
 
         $this->assertEquals("mynewtoken", $result["token"]);
     }
+    public function testUpdatePassword()
+    {
+        $userRepository = $this->createMock(UserRepository::class);
+        $mockRouter = $this->createMock(Router::class);
+        $mockOfferManager = $this->createMock(OfferManager::class);
+        $mockJwtManager = $this->createMock(JWTTokenManagerInterface::class);
+        $mockEm = $this->createMock(EntityManager::class);
+        $mockEm->expects($this->once())->method("flush");
+
+        $userManager = new UserManager($mockEm, $mockOfferManager, $mockRouter, $mockJwtManager);
+       $userManager->updatePassword();
+    }
 }

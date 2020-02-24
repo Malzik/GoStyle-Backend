@@ -40,7 +40,7 @@ class UserManager
         $this->offerManager = $offerManager;
     }
 
-    public function findProfile(UserInterface $user)
+    public function findProfile(?UserInterface $user)
     {
         $profile = $this->entityManager->getRepository(User::class)->find($user->getId());
 
@@ -68,7 +68,7 @@ class UserManager
         return ["data" => current($response), "status" => Response::HTTP_OK];
     }
 
-    public function updateUser(UserInterface $user, UserInterface $updatedUser)
+    public function updateUser(?UserInterface $user, UserInterface $updatedUser)
     {
         $currentUser = $this->entityManager->getRepository(User::class)->find($user->getId());
 
@@ -83,12 +83,12 @@ class UserManager
         return ["token" => $token];
     }
 
-    public function findById(UserInterface $getUser)
+    public function findById(?UserInterface $getUser)
     {
         return $this->entityManager->getRepository(User::class)->find($getUser->getId());
     }
 
-    public function addOfferToUser(UserInterface $user, $code)
+    public function addOfferToUser(?UserInterface $user, $code)
     {
         $currentUser = $this->findById($user);
         $offer = $this->offerManager->findByCode($code);
@@ -101,6 +101,11 @@ class UserManager
     public function createUser(User $user)
     {
         $this->entityManager->persist($user);
+        $this->entityManager->flush();
+    }
+
+    public function updatePassword()
+    {
         $this->entityManager->flush();
     }
 }

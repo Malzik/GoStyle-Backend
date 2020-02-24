@@ -9,6 +9,7 @@ use App\Repository\OfferRepository;
 use App\Repository\UserRepository;
 use JMS\Serializer\SerializerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use mysql_xdevapi\Exception;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -112,7 +113,7 @@ class UserController extends AbstractController
 
         try {
             $token = $this->userManager->updateUser($this->getUser(), $user);
-            return $this->getJsonResponse($token, Response::HTTP_OK, ["Link" => $this->generateUrl("login", [], 0)]);
+            return $this->getJsonResponse($token, Response::HTTP_NOT_FOUND);
         } catch (\Exception $e) {
             return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }
@@ -150,7 +151,6 @@ class UserController extends AbstractController
 
         $currentUser = $this->userManager->findById($this->getUser());
 
-        $newPassword = $passwordEncoder->encodePassword($currentUser, $newPassword);
         $currentUser->setPassword($newPassword);
 
         $errors = $validator->validate($currentUser, null, ["password"]);
@@ -159,8 +159,14 @@ class UserController extends AbstractController
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
         }
 
-        $em = $this->getDoctrine()->getManager();
-        $em->flush();
+        $newPassword = $passwordEncoder->encodePassword($currentUser, $newPassword);
+        $currentUser->setPassword($newPassword);
+
+        try {
+            $this->userManager->updatePassword();
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
 
         return $this->getJsonResponse(null, Response::HTTP_NO_CONTENT);
     }
