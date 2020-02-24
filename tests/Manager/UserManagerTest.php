@@ -28,6 +28,15 @@ class UserManagerTest extends TestCase
             $user->setFirstName("firstname");
             $user->setLastName("lastname");
             $user->setEmail("email$i@email.test");
+            for ($j = 0; $j < 2; $j++) {
+                $offer = new Offer();
+                $offer->setName("Offre $i");
+                $offer->setCode("code$i");
+                $offer->setDescription("Description $i");
+                $offer->setDeadline(new \DateTime());
+                $offer->setLogo("logo.png");
+                $user->addOffer($offer);
+            }
             $this->users[] = $user;
         }
     }
