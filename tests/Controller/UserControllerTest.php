@@ -125,7 +125,7 @@ class UserControllerTest extends TestCase
         $userController->setContainer($test);
         $result = $userController->updateProfil($request, $validatorMock);
 
-        $this->assertEquals(204, $result->getStatusCode());
+        $this->assertEquals(200, $result->getStatusCode());
     }
 
     public function testUpdateProfileWithInvalidatedUser()

@@ -105,7 +105,7 @@ class UserController extends AbstractController
     {
         $user = $this->getUnserializedUser($request);
 
-        $errors = $validator->validate($user, null, ["profil"]);
+        $errors = $validator->validate($user, null, ["update"]);
 
         if(count($errors)){
             return $this->getJsonResponse($errors, Response::HTTP_BAD_REQUEST);
@@ -113,7 +113,7 @@ class UserController extends AbstractController
 
         try {
             $token = $this->userManager->updateUser($this->getUser(), $user);
-            return $this->getJsonResponse($token, Response::HTTP_NO_CONTENT);
+            return $this->getJsonResponse($token, Response::HTTP_OK);
         } catch (\Exception $e) {
             return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }

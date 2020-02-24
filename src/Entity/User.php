@@ -27,8 +27,8 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Assert\NotBlank(message="L'email ne doit pas être vide", groups={"registration", "profil"})
-     * @Assert\Email(message="Le format du mail n'est pas valide", groups={"registration", "profil"})
+     * @Assert\NotBlank(message="L'email ne doit pas être vide", groups={"registration", "update", "profil"})
+     * @Assert\Email(message="Le format du mail n'est pas valide", groups={"registration", "update", "profil"})
      */
     private $email;
 
@@ -47,13 +47,13 @@ class User implements UserInterface, \JsonSerializable
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le prenom ne doit pas être vide", groups={"registration", "profil"})
+     * @Assert\NotBlank(message="Le prenom ne doit pas être vide", groups={"registration", "update", "profil"})
      */
 
     private $first_name;
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le nom ne doit pas être vide", groups={"registration", "profil"})
+     * @Assert\NotBlank(message="Le nom ne doit pas être vide", groups={"registration", "update", "profil"})
      */
     private $last_name;
 
