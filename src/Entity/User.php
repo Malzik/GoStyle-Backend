@@ -203,7 +203,7 @@ class User implements UserInterface, \JsonSerializable
         if (!$this->offers->contains($offer)) {
             $this->offers[] = $offer;
         } else {
-            throw new \Exception("Code déjà utilisé", 400);
+            throw new \Exception(["message" => "Code déjà utilisé", "code" => 400], 400);
         }
 
         return $this;
