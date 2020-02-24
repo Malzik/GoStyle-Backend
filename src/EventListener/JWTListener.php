@@ -4,9 +4,11 @@
 namespace App\EventListener;
 
 
+use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationFailureEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTAuthenticatedEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTNotFoundEvent;
+use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationFailureResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,5 +63,13 @@ class JWTListener extends JWTCreatedEvent
         $event->setResponse($response);
     }
 
+    public function onAuthenticationFailureResponse(AuthenticationFailureEvent $event)
+    {
+        $data = "Identifiants invalides";
+
+        $response = new JWTAuthenticationFailureResponse($data);
+
+        $event->setResponse($response);
+    }
 
 }

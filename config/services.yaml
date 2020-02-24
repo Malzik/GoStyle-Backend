@@ -15,6 +15,10 @@ services:
         class: App\EventListener\JWTListener
         tags:
             - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_not_found, method: onJWTNotFound }
+    acme_api.event.authentication_failure_listener:
+          class: App\EventListener\JWTListener
+          tags:
+              - { name: kernel.event_listener, event: lexik_jwt_authentication.on_authentication_failure, method: onAuthenticationFailureResponse }
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

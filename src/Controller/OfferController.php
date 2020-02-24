@@ -82,6 +82,13 @@ class OfferController extends AbstractController
             $offer = $this->offerManager->findByCode($code);
             if(empty($offer))
                 return $this->getJsonResponse(null, Response::HTTP_NOT_FOUND);
+            $offer = [
+                "name" => $offer->getName(),
+                "code" => $offer->getCode(),
+                "description" => $offer->getDescription(),
+                "logo" => $offer->getLogo(),
+                "deadline" => $offer->getDeadline()->format("Y-m-d")
+            ];
             return $this->getJsonResponse($offer);
         } catch (\Exception $e) {
             return $this->getJsonResponse($e->getMessage(), $e->getCode());

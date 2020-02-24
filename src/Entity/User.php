@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\JoinTable;
+use http\Exception\InvalidArgumentException;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -197,10 +198,12 @@ class User implements UserInterface, \JsonSerializable
         return $this->offers;
     }
 
-    public function addOffer(Offer $offer): self
+    public function addOffer(Offer $offer)
     {
         if (!$this->offers->contains($offer)) {
             $this->offers[] = $offer;
+        } else {
+            throw new \Exception("Code déjà utilisé", 400);
         }
 
         return $this;
