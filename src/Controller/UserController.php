@@ -232,7 +232,7 @@ class UserController extends AbstractController
         try {
             $this->userManager->addOfferToUser($this->getUser(), $offer["code"]);
         } catch (\Exception $e) {
-            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+            return $this->getJsonResponse(["message" => $e->getMessage(), "code" => $e->getCode()], $e->getCode());
         }
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
