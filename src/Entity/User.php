@@ -43,7 +43,7 @@ class User implements UserInterface, \JsonSerializable
      * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli", groups={"registration", "password"})
      * @Assert\Length(min="2", minMessage="Le mot de passe est trop court", groups={"registration", "password"})
      * @Assert\NotCompromisedPassword(message="Le mot de passe est trop simple")
-     * @Assert\Regex(pattern="#.*^(?=.{8,20})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*\W).*$#", match=true, message="Le mot de passe doit contenir au moins une majuscule, une minuscule et un caractère spéciaux", groups={"registration", "password"})
+     * @Assert\Regex(pattern="#.*^(?=.{8,20})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*\W).*$#", match=true, message="Le mot de passe doit contenir au moins une majuscule, une minuscule et un caractère spécial", groups={"registration", "password"})
      */
     private $password;
 
