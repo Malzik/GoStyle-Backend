@@ -10,84 +10,111 @@ namespace App\Tests\Controller;
 
 use App\Controller\OfferController;
 use App\Entity\Offer;
-use App\Repository\OfferRepository;
+use App\Manager\OfferManager;
+use DateTime;
+use Exception;
+use JMS\Serializer\SerializerInterface;
 use PHPUnit\Framework\TestCase;
 
 class OfferControllerTest extends TestCase
 {
-    public function __construct(?string $name = null, array $data = [], string $dataName = '')
+    /**
+     * @var array
+     */
+    private $offers;
+
+    protected function setUp(): void
     {
-        parent::__construct($name, $data, $dataName);
+        for ($i = 0; $i < 3; $i++) {
+            $offer = new Offer();
+            $offer->setName("Offre $i");
+            $offer->setCode("code$i");
+            $offer->setDescription("Description $i");
+            $offer->setDeadline(new DateTime());
+            $offer->setLogo("logo.png");
+            $this->offers[] = $offer;
+        }
     }
 
-
-    public function testOfferById()
+    public function testOfferByCode()
     {
-        $offer = new Offer();
-        $offer->setName("Offre 1");
-        $offer->setCode("Code");
-        $offer->setDescription("Description 1");
-        $offer->setDeadline(new \DateTime());
-        $offer->setLogo("logo.png");
+        $offerManager = $this->createMock(OfferManager::class);
+        $offerManager->expects($this->once())
+            ->method('findByCode')
+            ->willReturn($this->offers[1]);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->expects($this->once())
+            ->method("serialize")
+            ->willReturn(json_encode($this->offers[1]));
 
-        $offerRepository = $this->createMock(OfferRepository::class);
 
-        $offerRepository->expects($this->any())
-            ->method('find')
-            ->willReturn($offer);
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offerByCode("code");
 
-        $offerController = new OfferController($offerRepository);
-        $offers = $offerController->offerById(1);
-        $offers = json_decode($offers->getContent(), true);
-        $this->assertEquals($offer->getName(), $offers["name"]);
+        $offer = json_decode($result->getContent(), true);
+        $this->assertEquals($this->offers[1]->getName(), $offer["name"]);
     }
 
-    public function testOfferByIdWithIdNotFound()
+    public function testOfferByCodeWithCodeNotFound()
     {
-        $offer = new Offer();
-        $offer->setName("Offre 1");
-        $offer->setCode("Code");
-        $offer->setDescription("Description 1");
-        $offer->setDeadline(new \DateTime());
-        $offer->setLogo("logo.png");
-
-        $offerRepository = $this->createMock(OfferRepository::class);
-
-        $offerRepository->expects($this->any())
-            ->method('find')
+        $offerManager = $this->createMock(OfferManager::class);
+        $offerManager->expects($this->once())
+            ->method('findByCode')
             ->willReturn([]);
+        $serializer = $this->createMock(SerializerInterface::class);
 
-        $offerController = new OfferController($offerRepository);
-        $offers = $offerController->offerById(1);
-        $offers = json_decode($offers->getStatusCode(), true);
-        $this->assertEquals(404, $offers);
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offerByCode("fakecode");
+
+        $this->assertEquals(404, $result->getStatusCode());
+    }
+
+    public function testOfferByCodeThrowException()
+    {
+        $offerManager = $this->createMock(OfferManager::class);
+        $offerManager->expects($this->once())
+            ->method('findByCode')
+            ->willThrowException(new Exception("fake error", 500));
+        $serializer = $this->createMock(SerializerInterface::class);
+
+
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offerByCode("code");
+
+        $this->assertEquals(500, $result->getStatusCode());
     }
 
     public function testOffers()
     {
-        $offer1 = new Offer();
-        $offer1->setName("Offre 1");
-        $offer1->setCode("Code");
-        $offer1->setDescription("Description 1");
-        $offer1->setDeadline(new \DateTime());
-        $offer1->setLogo("logo.png");
-
-        $offer2 = new Offer();
-        $offer2->setName("Offre 2");
-        $offer2->setCode("Code");
-        $offer2->setDescription("Description 2");
-        $offer2->setDeadline(new \DateTime());
-        $offer2->setLogo("logo.png");
-
-        $offerRepository = $this->createMock(OfferRepository::class);
-
-        $offerRepository->expects($this->any())
+        $offerManager = $this->createMock(OfferManager::class);
+        $offerManager->expects($this->once())
             ->method('findAll')
-            ->willReturn([$offer1, $offer2]);
+            ->willReturn($this->offers);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->expects($this->once())
+            ->method("serialize")
+            ->willReturn(json_encode($this->offers));
 
-        $offerController = new OfferController($offerRepository);
-        $offers = $offerController->offers();
-        $offers = json_decode($offers->getContent(), true);
-        $this->assertEquals($offer2->getName(), $offers[1]["name"]);
+
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offers();
+        $offers = json_decode($result->getContent(), true);
+
+        $this->assertEquals(200, $result->getStatusCode());
+        $this->assertEquals(sizeof($this->offers), sizeof($offers));
+    }
+
+    public function testOffersThrowException()
+    {
+        $offerManager = $this->createMock(OfferManager::class);
+        $offerManager->expects($this->once())
+            ->method('findAll')
+            ->willThrowException(new Exception("fake exception", 500));
+        $serializer = $this->createMock(SerializerInterface::class);
+
+        $offerController = new OfferController($offerManager, $serializer);
+        $result = $offerController->offers();
+
+        $this->assertEquals(500, $result->getStatusCode());
     }
 }

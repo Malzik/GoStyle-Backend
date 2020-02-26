@@ -5,14 +5,18 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\JoinTable;
+use http\Exception\InvalidArgumentException;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @UniqueEntity("email", message="L'email a déjà été utilisé")
+ * @UniqueEntity("email", message="L'email a déjà été utilisé", groups={"registration"})
  */
-class User implements \JsonSerializable
+class User implements UserInterface, \JsonSerializable
 {
     /**
      * @ORM\Id()
@@ -22,36 +26,47 @@ class User implements \JsonSerializable
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le prenom ne doit pas être vide")
+     * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\NotBlank(message="L'email ne doit pas être vide", groups={"registration", "update", "profil"})
+     * @Assert\Email(message="Le format du mail n'est pas valide", groups={"registration", "update", "profil"})
      */
-    private $first_name;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le nom ne doit pas être vide")
-     */
-    private $last_name;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="L'email ne doit pas être vide")
-     * @Assert\Email(message="Le format du mail n'est pas valide")
-*/
     private $email;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli")
-     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court")
+     * @ORM\Column(type="json")
+     */
+    private $roles = [];
+
+    /**
+     * @var string The hashed password
+     * @ORM\Column(type="string")
+     * @Assert\NotBlank(message="Le mot de passe n'a pas été rempli", groups={"registration", "password"})
+     * @Assert\Length(min="2", minMessage="Le mot de passe est trop court", groups={"registration", "password"})
+     * @Assert\NotCompromisedPassword(message="Le mot de passe est trop simple")
+     * @Assert\Regex(pattern="#.*^(?=.{8,20})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*\W).*$#", match=true, message="Le mot de passe doit contenir au moins une majuscule, une minuscule et un caractère spécial", groups={"registration", "password"})
      */
     private $password;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le prenom ne doit pas être vide", groups={"registration", "update", "profil"})
+     */
+
+    private $first_name;
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Le nom ne doit pas être vide", groups={"registration", "update", "profil"})
+     */
+    private $last_name;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Offer", inversedBy="users")
      */
     private $offers;
 
+    /**
+     * User constructor.
+     */
     public function __construct()
     {
         $this->offers = new ArrayCollection();
@@ -62,28 +77,12 @@ class User implements \JsonSerializable
         return $this->id;
     }
 
-    public function getFirstName(): ?string
+    /**
+     * @param mixed $id
+     */
+    public function setId($id): void
     {
-        return $this->first_name;
-    }
-
-    public function setFirstName(string $first_name): self
-    {
-        $this->first_name = $first_name;
-
-        return $this;
-    }
-
-    public function getLastName(): ?string
-    {
-        return $this->last_name;
-    }
-
-    public function setLastName(string $last_name): self
-    {
-        $this->last_name = $last_name;
-
-        return $this;
+        $this->id = $id;
     }
 
     public function getEmail(): ?string
@@ -98,9 +97,41 @@ class User implements \JsonSerializable
         return $this;
     }
 
-    public function getPassword(): ?string
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUsername(): string
     {
-        return $this->password;
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getPassword(): string
+    {
+        return (string) $this->password;
     }
 
     public function setPassword(string $password): self
@@ -111,6 +142,57 @@ class User implements \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getFirstName(): string
+    {
+        return $this->first_name;
+    }
+
+    /**
+     * @param mixed $first_name
+     */
+    public function setFirstName($first_name): void
+    {
+        $this->first_name = $first_name;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLastName(): string
+    {
+        return $this->last_name;
+    }
+
+    /**
+     * @param mixed $last_name
+     */
+    public function setLastName($last_name): void
+    {
+        $this->last_name = $last_name;
+    }
+
+
+
+    /**
+     * @see UserInterface
+     */
+    public function getSalt()
+    {
+        // not needed when using the "bcrypt" algorithm in security.yaml
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    /**
      * @return Collection|Offer[]
      */
     public function getOffers(): Collection
@@ -118,10 +200,12 @@ class User implements \JsonSerializable
         return $this->offers;
     }
 
-    public function addOffer(Offer $offer): self
+    public function addOffer(Offer $offer)
     {
         if (!$this->offers->contains($offer)) {
             $this->offers[] = $offer;
+        } else {
+            throw new \Exception("Code déjà utilisé", 400);
         }
 
         return $this;
@@ -144,8 +228,8 @@ class User implements \JsonSerializable
         }
         /** @var Offer $offer */
         return [
-            "firstName" => $this->first_name,
-            "lastName" => $this->last_name,
+            "first_name" => $this->first_name,
+            "last_name" => $this->last_name,
             "email" => $this->email,
             "offers" => $offers
         ];

@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -44,6 +45,7 @@ class Offer implements \JsonSerializable
      * @ORM\Column(type="date")
      */
     private $deadline;
+
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="offers")

@@ -2,8 +2,11 @@
 
 namespace App\Controller;
 
+use App\Manager\OfferManager;
 use App\Repository\OfferRepository;
+use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,17 +22,23 @@ use App\Entity\Offer;
 class OfferController extends AbstractController
 {
     /**
-     * @var OfferRepository
+     * @var OfferManager
      */
-    private $offerRepository;
+    private $offerManager;
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
 
     /**
      * OfferController constructor.
-     * @param OfferRepository $offerRepository
+     * @param OfferManager $offerManager
+     * @param SerializerInterface $serializer
      */
-    public function __construct(OfferRepository $offerRepository)
+    public function __construct(OfferManager $offerManager, SerializerInterface $serializer)
     {
-        $this->offerRepository = $offerRepository;
+        $this->offerManager = $offerManager;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -43,43 +52,58 @@ class OfferController extends AbstractController
      *     )
      * )
      * @SWG\Tag(name="Offers")
+     * @Security(name="Bearer")
      **/
     public function offers()
     {
-        $offers = $this->offerRepository->findAll();
-        foreach ($offers as $offer){
-            $response[] = [
+        try {
+            $offers = $this->offerManager->findAll();
+            return $this->getJsonResponse($offers);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * @Route("/offers/{code}", name="offer", methods={"GET"})
+     * @param string code
+     * @return JsonResponse
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns offer by code",
+     *     @Model(type=Offer::class)
+     * )
+     * @SWG\Tag(name="Offers")
+     * @Security(name="Bearer")
+     */
+    public function offerByCode(string $code)
+    {
+        try {
+            $offer = $this->offerManager->findByCode($code);
+            if(empty($offer))
+                return $this->getJsonResponse(null, Response::HTTP_NOT_FOUND);
+            $offer = [
                 "name" => $offer->getName(),
                 "code" => $offer->getCode(),
                 "description" => $offer->getDescription(),
                 "logo" => $offer->getLogo(),
-                "deadline" => $offer->getDeadline()->format("Y-m-d"),
-                "_links" => [
-                    "item" => [
-                        "self" => $this->generateUrl("apioffer", ["id"=>$offer->getId()], 0)
-                    ]
-                ]
+                "deadline" => $offer->getDeadline()->format("Y-m-d")
             ];
+            return $this->getJsonResponse($offer);
+        } catch (\Exception $e) {
+            return $this->getJsonResponse($e->getMessage(), $e->getCode());
         }
-        return new JsonResponse($response);
     }
 
-    /**
-     * @Route("/offers/{id}", name="offer", methods={"GET"})
-     * @param int $id
-     * @return JsonResponse
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns offer by id",
-     *     @Model(type=Offer::class)
-     * )
-     * @SWG\Tag(name="Offers")
-     */
-    public function offerById(int $id)
+    private function getJsonResponse($data = null, int $status = 200, $headers = []) : JsonResponse
     {
-        $offer = $this->offerRepository->find($id);
-        if(empty($offer))
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        return new JsonResponse($this->offerRepository->find($id));
+        $serializedData = $data;
+        if (!is_null($data)){
+            $serializedData = $this->serializer->serialize($data, 'json');
+        }
+        $response = new JsonResponse(null, $status, $headers);
+        $response->setContent($serializedData);
+
+        return $response;
     }
 }

@@ -12,6 +12,11 @@
 /.idea
 ###< symfony/framework-bundle ###
 
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###
+/composer.lock
+
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache
